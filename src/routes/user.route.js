@@ -29,6 +29,7 @@ router.get("/debug", (req, res) => {
         originHeader: req.header("Origin") || null
     });
 });
-
+// secured routes
+router.route("/refresh-token").post(verifyJWT, refreshAccessToken)
 
 export default router;
