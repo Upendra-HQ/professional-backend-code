@@ -391,7 +391,7 @@ const getWatchedVideos = asyncHandler(async(req, res) => {
 
     return res
         .status(200)
-        .json(new ApiResponce(200, user[0], "Watch history fetched successfully"));
+        .json(new ApiResponce(200, user[0].getWatchedVideos, "Watch history fetched successfully"));
 });
 export {
     registerUser,
