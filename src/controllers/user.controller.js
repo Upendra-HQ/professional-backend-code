@@ -314,15 +314,15 @@ const getUserChannelProfile = asyncHandler(async(req, res) => {
         {
             $addFields: {
                 subscribersCount: { $size: "$subscribers" },
-            },
-            channeIsSubscribedToCount: { $size: "$subscribedTo" },
-            isSubscribed: {
-                $cond: {
-                    if: {
-                        $in: [req.user._id, "$subscribers.subscriber"]
-                    },
-                    then: true,
-                    else: false
+                channeIsSubscribedToCount: { $size: "$subscribedTo" },
+                isSubscribed: {
+                    $cond: {
+                        if: {
+                            $in: [req.user._id, "$subscribers.subscriber"]
+                        },
+                        then: true,
+                        else: false
+                    }
                 }
             }
         },
@@ -350,6 +350,49 @@ const getUserChannelProfile = asyncHandler(async(req, res) => {
         .json(new ApiResponce(200, channel[0], "Channel profile fetched successfully"))
 });
 
+const getWatchedVideos = asyncHandler(async(req, res) => {
+    const user = await User.aggregate([{
+            $match: {
+                _id: new mongoose.Types.ObjectId(req.user._id)
+            }
+        },
+        {
+            $lookup: {
+                from: "videos",
+                localField: "watchedHistory",
+                foreignField: "_id",
+                as: "watchedHistory",
+                pipeline: [{
+                        $lookup: {
+                            from: "users",
+                            localField: "owner",
+                            foreignField: "_id",
+                            as: "owner",
+                            pipeline: [{
+                                $project: {
+                                    fullname: 1,
+                                    username: 1,
+                                    avatar: 1
+                                }
+                            }]
+                        }
+                    },
+                    {
+                        $addFields: {
+                            owner: {
+                                $first: "$owner"
+                            }
+                        }
+                    }
+                ]
+            }
+        }
+    ]);
+
+    return res
+        .status(200)
+        .json(new ApiResponce(200, user[0], "Watch history fetched successfully"));
+});
 export {
     registerUser,
     loginUser,
@@ -360,6 +403,6 @@ export {
     updateAccountSettings,
     updateUserAvatar,
     updateUserCoverImage,
-    getUserChannelProfile
-
+    getUserChannelProfile,
+    getWatchedVideos
 };
